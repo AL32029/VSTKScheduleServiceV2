@@ -1,6 +1,6 @@
 [project]
 name = "migrations"
-version = "0.1.0"
+version = "0.1.0dev0"
 description = "Миграции Alembic для системы"
 authors = [
     {name = "Nikita Bondarev",email = "nikitabondarevvitebsk@gmail.com"}
@@ -9,7 +9,9 @@ license = "No license (Для внутреннего пользования)"
 requires-python = ">=3.12,<3.15"
 dependencies = [
     "alembic (>=1.20.0,<2.0.0)",
-    "database-models @ file:///../shared_libs/database_models"
+    "database-models @ ../shared_libs/database_models",
+    "cryptography (>=50.0.1,<51.0.0)",
+    "asyncpg (>=0.31.0,<0.32.0)",
 ]
 
 

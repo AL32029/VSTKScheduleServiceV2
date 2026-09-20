@@ -1,6 +1,6 @@
 [project]
 name = "database-models"
-version = "0.1.0"
+version = "0.1.0dev3"
 description = "Общие ORM-модели базы данных для системы"
 authors = [
     {name = "Nikita Bondarev",email = "nikitabondarevvitebsk@gmail.com"}

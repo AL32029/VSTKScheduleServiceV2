@@ -1,6 +1,6 @@
 [project]
 name = "bot"
-version = "0.1.0"
+version = "0.1.0dev0"
 description = "Бот для системы расписания"
 authors = [
     {name = "Nikita Bondarev",email = "nikitabondarevvitebsk@gmail.com"}

@@ -1,6 +1,6 @@
 [project]
 name = "parser"
-version = "0.1.0"
+version = "0.1.0dev0"
 description = "Парсер сайта УО \"ВГТК\""
 authors = [
     {name = "Nikita Bondarev",email = "nikitabondarevvitebsk@gmail.com"}
@@ -8,6 +8,18 @@ authors = [
 license = "No license (Для внутреннего пользования)"
 requires-python = ">=3.12,<3.15"
 dependencies = [
+    "database-models @ ../../shared_libs/database_models",
+    "managers @ ../../shared_libs/managers",
+    "httpx (>=0.28.1,<0.29.0)",
+    "numpy (<2.4)",
+    "tzdata (>=2026.4,<2027.0)",
+    "redis (<6.0)",
+    "dishka (>=1.10.1,<2.0.0)",
+    "pydantic (>=2.13.5,<3.0.0)",
+    "pydantic-settings (>=2.15.0,<3.0.0)",
+    "sqlalchemy (>=2.0.54,<3.0.0)",
+    "asyncpg (>=0.31.0,<0.32.0)",
+    "beautifulsoup4 (>=4.15.0,<5.0.0)"
 ]
 
 
@@ -17,3 +29,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "C", "N", "UP", "B", "A", "SIM", "ARG", "PT"]
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.16.8,<0.17.0)"
+]

@@ -14,6 +14,7 @@ from sqlalchemy import (
     SmallInteger,
     String,
     Time,
+    column,
     func,
     text,
 )
@@ -135,8 +136,11 @@ class LessonTitleORM(Base):
     __table_args__ = (
         Index(
             "idx_lesson_titles_effective_title_trgm",
-            text("COALESCE(custom_title, original_title) gin_trgm_ops"),
+            func.coalesce(column("custom_title"), column("original_title")),
             postgresql_using="gin",
+            postgresql_ops={
+                "coalesce": "gin_trgm_ops",
+            },
         ),
     )
 

@@ -1,11 +1,16 @@
 import asyncio
+import os
+import ssl
 from logging.config import fileConfig
+from ssl import SSLContext
 
 from alembic import context
-from database_models.base import Base
-from sqlalchemy import pool
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from database_models import Base
+from sqlalchemy import URL, pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -22,11 +27,79 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
-
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+
+def _system_mode() -> str:
+    return os.environ.get("BASE_SYSTEM_MODE", "prod")
+
+
+def _load_ssl_context() -> SSLContext:
+    ca_file = os.environ.get(
+        "DATABASE_SSL_CA_CERT_FILE", "/vault/secrets/database-tls.ca"
+    )
+    cert_file = os.environ.get(
+        "DATABASE_SSL_CERT_FILE", "/vault/secrets/database-tls.crt"
+    )
+    key_file = os.environ.get(
+        "DATABASE_SSL_KEY_FILE", "/vault/secrets/database-tls.key"
+    )
+
+    ssl_context = ssl.create_default_context(cafile=ca_file)
+    ssl_context.load_cert_chain(certfile=cert_file, keyfile=key_file)
+
+    cert_reqs = os.environ.get("DATABASE_SSL_CERT_REQS", "required")
+    if cert_reqs == "none":
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+    elif cert_reqs == "optional":
+        ssl_context.verify_mode = ssl.CERT_OPTIONAL
+    else:
+        ssl_context.verify_mode = ssl.CERT_REQUIRED
+
+    check_hostname = os.environ.get("DATABASE_SSL_CHECK_HOSTNAME", "true").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    ssl_context.check_hostname = check_hostname
+
+    return ssl_context
+
+
+def _build_prod_url() -> str:
+    cert_file = os.environ.get(
+        "DATABASE_SSL_CERT_FILE", "/vault/secrets/database-tls.crt"
+    )
+    with open(cert_file, "rb") as f:
+        cert = x509.load_pem_x509_certificate(f.read(), default_backend())
+
+    common_name = str(
+        cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)[0].value
+    )
+
+    host = os.environ["DATABASE_HOST"]
+    port = int(os.environ.get("DATABASE_PORT", "5432"))
+    database = os.environ["DATABASE_BASE"]
+
+    return URL.create(
+        "postgresql+asyncpg",
+        host=host,
+        port=port,
+        username=common_name,
+        database=database,
+    ).render_as_string(hide_password=False)
+
+
+def _build_url_and_connect_args() -> tuple[str, dict]:
+    if _system_mode() == "prod":
+        return _build_prod_url(), {"ssl": _load_ssl_context()}
+
+    url = os.environ["MIGRATION_DATABASE_URL"]
+    return url, {}
 
 
 def run_migrations_offline() -> None:
@@ -41,7 +114,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url, _ = _build_url_and_connect_args()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -65,11 +138,12 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
+    url, connect_args = _build_url_and_connect_args()
 
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    connectable = create_async_engine(
+        url,
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
 
     async with connectable.connect() as connection:
