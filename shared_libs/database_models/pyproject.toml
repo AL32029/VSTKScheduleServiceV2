@@ -1,0 +1,25 @@
+[project]
+name = "database-models"
+version = "0.1.0"
+description = "Общие ORM-модели базы данных для системы"
+authors = [
+    {name = "Nikita Bondarev",email = "nikitabondarevvitebsk@gmail.com"}
+]
+license = "No license (Для внутреннего пользования)"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+    "sqlalchemy (>=2.0.54,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "ruff (>=0.16.8,<0.17.0)"
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "C", "N", "UP", "B", "A", "SIM", "ARG", "PT"]

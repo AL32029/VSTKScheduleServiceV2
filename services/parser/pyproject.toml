@@ -1,0 +1,19 @@
+[project]
+name = "parser"
+version = "0.1.0"
+description = "Парсер сайта УО \"ВГТК\""
+authors = [
+    {name = "Nikita Bondarev",email = "nikitabondarevvitebsk@gmail.com"}
+]
+license = "No license (Для внутреннего пользования)"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "C", "N", "UP", "B", "A", "SIM", "ARG", "PT"]
