@@ -1,16 +1,15 @@
 from dataclasses import dataclass
 
+from parser.domain.entities.base import ScheduleItem
+
 
 @dataclass(frozen=True)
-class LessonTitle:
-    index: str
-    title: str
-
-    def __hash__(self) -> int:
-        return hash((self.index, self.title))
+class LessonTitle(ScheduleItem):
+    def __post_init__(self):
+        object.__setattr__(self, "title", " ".join(self.title.split()))
 
     def __eq__(self, value: object, /) -> bool:
         if not isinstance(value, LessonTitle):
             return NotImplemented
 
-        return (self.index, self.title) == (value.index, value.title)
+        return super().__eq__(value)

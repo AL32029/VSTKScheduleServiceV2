@@ -9,7 +9,6 @@ license = "No license (Для внутреннего пользования)"
 requires-python = ">=3.12,<3.15"
 dependencies = [
     "database-models @ ../../shared_libs/database_models",
-    "managers @ ../../shared_libs/managers",
     "httpx (>=0.28.1,<0.29.0)",
     "numpy (<2.4)",
     "tzdata (>=2026.4,<2027.0)",
@@ -19,7 +18,10 @@ dependencies = [
     "pydantic-settings (>=2.15.0,<3.0.0)",
     "sqlalchemy (>=2.0.54,<3.0.0)",
     "asyncpg (>=0.31.0,<0.32.0)",
-    "beautifulsoup4 (>=4.15.0,<5.0.0)"
+    "beautifulsoup4 (>=4.15.0,<5.0.0)",
+    "lxml (>=6.1.3,<7.0.0)",
+    "database-manager @ ../../shared_libs/database_manager",
+    "redis-manager @ ../../shared_libs/redis_manager"
 ]
 
 

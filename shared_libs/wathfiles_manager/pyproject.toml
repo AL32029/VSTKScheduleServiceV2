@@ -1,0 +1,18 @@
+[project]
+name = "wathfiles-manager"
+version = "0.1.0"
+description = "Менеджер WatchFiles"
+authors = [
+    {name = "Nikita Bondarev",email = "nikitabondarevvitebsk@gmail.com"}
+]
+license = "No license (Для внутреннего пользования)"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+    "watchfiles (>=1.3.0,<2.0.0)",
+    "pydantic (>=2.13.5,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
