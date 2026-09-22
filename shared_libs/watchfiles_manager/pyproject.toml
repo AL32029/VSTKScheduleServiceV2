@@ -1,5 +1,5 @@
 [project]
-name = "wathfiles-manager"
+name = "watchfiles-manager"
 version = "0.1.0"
 description = "Менеджер WatchFiles"
 authors = [
