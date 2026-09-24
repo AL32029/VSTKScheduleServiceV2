@@ -627,14 +627,14 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
                 )
 
             if lessons:
-                while lessons and str(lessons[-1].name).lower() == "обед":
+                while lessons and str(lessons[-1].name[0]).lower() == "обед":
                     logger.debug(
                         "Removing trailing 'обед' lesson for group %s",
                         group_parser.group,
                     )
                     lessons.pop()
 
-                while lessons and str(lessons[0].name).lower() == "обед":
+                while lessons and str(lessons[0].name[0]).lower() == "обед":
                     logger.debug(
                         "Removing leading 'обед' lesson for group %s",
                         group_parser.group,

@@ -5,13 +5,12 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Literal
 
-
 if TYPE_CHECKING:
     from parser.domain.entities.cabinet import Cabinet
+    from parser.domain.entities.day_schedule import DayScheduleItem
     from parser.domain.entities.group import Group
     from parser.domain.entities.lesson_time_range import LessonTimeRange
     from parser.domain.entities.lesson_title import LessonTitle
-    from parser.domain.entities.day_schedule import DayScheduleItem
 
 
 class ScheduleRepository(ABC):
