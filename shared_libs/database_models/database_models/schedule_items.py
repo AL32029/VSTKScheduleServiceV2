@@ -168,6 +168,12 @@ class LessonTitleORM(Base):
         lazy="joined",
     )
 
+    lesson_titles: Mapped[list[LessonTitleORM]] = relationship(
+        "LessonTitleORM",
+        back_populates="lesson_title",
+        lazy="noload",
+    )
+
 
 # ============== [ORM-модель урока] ==============
 class LessonORM(Base):
@@ -193,9 +199,6 @@ class LessonORM(Base):
     time_range_id: Mapped[int] = mapped_column(
         ForeignKey("lesson_times.id", ondelete="RESTRICT")
     )
-    name_id: Mapped[str] = mapped_column(
-        ForeignKey("lesson_titles.index", ondelete="RESTRICT")
-    )
 
     time_range: Mapped[LessonTimeORM] = relationship(
         "LessonTimeORM",
@@ -208,6 +211,15 @@ class LessonORM(Base):
         back_populates="lesson",
         lazy="selectin",
         order_by="LessonCabinetORM.cabinet_index",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    titles: Mapped[list[LessonTitleORM]] = relationship(
+        "LessonTitleORM",
+        back_populates="lesson",
+        lazy="selectin",
+        order_by="LessonTitleORM.lesson_title_index",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
@@ -247,6 +259,43 @@ class LessonCabinetORM(Base):
     lesson: Mapped[LessonORM] = relationship(
         "LessonORM",
         back_populates="cabinets",
+        lazy="noload",
+    )
+
+
+class LessonLessonTitleORM(Base):
+    __tablename__ = "lesson_lesson_titles"
+    __table_args__ = (
+        CheckConstraint(
+            "lesson_title_index BETWEEN 0 AND 1",
+            name="ck_lesson_lesson_titles_lesson_title_index",
+        ),
+        Index(
+            "idx_lesson_lesson_titles_lesson_id_lesson_title_id",
+            "lesson_id",
+            "lesson_title_id",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+    lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id", ondelete="CASCADE"))
+    lesson_title_id: Mapped[str] = mapped_column(
+        ForeignKey("lesson_titles.index", ondelete="RESTRICT")
+    )
+    lesson_title_index: Mapped[int] = mapped_column(SmallInteger)
+
+    lesson_title: Mapped[LessonTitleORM] = relationship(
+        "LessonTitleORM",
+        back_populates="lesson_titles",
+        lazy="joined",
+    )
+    lesson: Mapped[LessonORM] = relationship(
+        "LessonORM",
+        back_populates="titles",
         lazy="noload",
     )
 

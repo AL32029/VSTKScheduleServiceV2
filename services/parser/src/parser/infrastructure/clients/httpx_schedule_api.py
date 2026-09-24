@@ -19,6 +19,7 @@ from parser.domain.entities.group import Group, GroupParser
 from parser.domain.entities.lesson_time_range import LessonTimeRange
 from parser.domain.entities.lesson_title import LessonTitle
 from parser.infrastructure.clients.schedule_api import ScheduleAPIClient
+from parser.infrastructure.config.system_settings import system_settings
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,8 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
             | tuple[date, date]
             | tuple[LessonTimeRange, ...]
             | list[Group]
+            | list[Cabinet]
+            | list[LessonTitle]
             | dict[Group, DayScheduleItem],
         ]
         | None
@@ -185,11 +188,33 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
 
         logger.info("Successfully extracted day schedules for %s", schedule_at)
 
+        logger.info(
+            "Extracting cabinets and lesson titles from the day schedules for %s",
+            schedule_at,
+        )
+
+        _cabinets_return, _lesson_titles_return = self._extract_cabinets_and_titles(
+            _day_schedules
+        )
+
+        if not _cabinets_return and not _lesson_titles_return:
+            logger.warning(
+                "No cabinets or lesson titles were extracted from the day "
+                "schedules for %s",
+                schedule_at,
+            )
+
+        logger.info(
+            "Successfully extracted cabinets and lesson titles for %s", schedule_at
+        )
+
         return {
             "schedule_at": schedule_at,
             "schedule_date_range": _schedule_dates,
             "time_ranges": _time_ranges,
             "groups": [g.group for g in _groups_parser],
+            "cabinets": list(_cabinets_return),
+            "lesson_titles": list(_lesson_titles_return),
             "day_schedules": _day_schedules,
         }
 
@@ -451,7 +476,7 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
             logger.debug("No dates were extracted from the schedule matrix")
             return None
 
-        today = datetime.datetime.now().date()  # TODO: Установить часовой пояс
+        today = datetime.datetime.now(system_settings.timezone).date()
         _date_list_result = self._filter_and_reduce_dates(date_list, today, schedule_at)
 
         if not _date_list_result:
@@ -523,7 +548,7 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
             return None
 
         groups = [
-            GroupParser(title=g, pos_x=int(x), pos_y=int(y))
+            GroupParser(title=g, pos_x=int(x), pos_y=int(y), is_active=True)
             for g, (y, x) in zip(matrix_mask, argwhere(mask), strict=False)
         ]
 
@@ -596,7 +621,7 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
                 lessons.append(
                     LessonItem(
                         time_range=time_ranges[l_idx],
-                        name=LessonTitle(title=lesson),
+                        name=[LessonTitle(title=l_t) for l_t in lesson.split("/")],
                         cabinets=tuple(Cabinet(cab) for cab in cabinets),
                     )
                 )
@@ -642,3 +667,40 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
 
         logger.debug("Built day schedules for %d groups", len(group_day_schedules))
         return group_day_schedules
+
+    def _extract_cabinets_and_titles(
+        self,
+        day_schedules: dict[Group, DayScheduleItem],
+    ) -> tuple[list[Cabinet], list[LessonTitle]]:
+        logger.debug(
+            "Extracting cabinets and lesson titles from %d day schedules",
+            len(day_schedules),
+        )
+
+        _cabinets_return = set()
+        _lesson_titles_return = set()
+
+        for group, day_schedule in day_schedules.items():
+            if not day_schedule.lessons:
+                logger.debug("Skipping group %s: it has no lessons", group)
+                continue
+
+            for lesson in day_schedule.lessons:
+                if lesson.cabinets:
+                    _cabinets_return.update(lesson.cabinets)
+
+                _lesson_titles_return.update(lesson.name)
+
+            logger.debug(
+                "Processed %d lessons for group %s",
+                len(day_schedule.lessons),
+                group,
+            )
+
+        logger.debug(
+            "Extracted %d unique cabinets and %d unique lesson titles",
+            len(_cabinets_return),
+            len(_lesson_titles_return),
+        )
+
+        return list(_cabinets_return), list(_lesson_titles_return)

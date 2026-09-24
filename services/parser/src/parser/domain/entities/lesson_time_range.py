@@ -7,7 +7,7 @@ from typing import Literal
 class LessonTimeRange:
     start: datetime.time
     end: datetime.time
-    time_type: Literal["default", "reduce"] | None = None
+    time_type: Literal["standard", "reduce"] | None = None
 
     def __str__(self) -> str:
         return f"{self.start.strftime('%H:%M')} - {self.end.strftime('%H:%M')}"
@@ -24,7 +24,7 @@ class LessonTimeRange:
         _end_dt = datetime.datetime.combine(datetime.date.today(), self.end)
 
         if (_end_dt - _start_dt).total_seconds() == 60 * 45:
-            object.__setattr__(self, "time_type", "default")
+            object.__setattr__(self, "time_type", "standard")
         elif (_end_dt - _start_dt).total_seconds() < 60 * 45:
             object.__setattr__(self, "time_type", "reduce")
         else:

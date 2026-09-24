@@ -4,6 +4,9 @@ from abc import ABC, abstractmethod
 from datetime import date
 from typing import TYPE_CHECKING, Literal
 
+from parser.domain.entities.cabinet import Cabinet
+from parser.domain.entities.lesson_title import LessonTitle
+
 if TYPE_CHECKING:
     from parser.domain.entities.day_schedule import DayScheduleItem
     from parser.domain.entities.group import Group
@@ -23,6 +26,8 @@ class ScheduleAPIClient(ABC):
             | tuple[date, date]
             | tuple[LessonTimeRange, ...]
             | list[Group]
+            | list[Cabinet]
+            | list[LessonTitle]
             | dict[Group, DayScheduleItem],
         ]
         | None

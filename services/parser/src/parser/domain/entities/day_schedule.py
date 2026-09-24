@@ -14,12 +14,15 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class LessonItem:
     time_range: LessonTimeRange
-    name: LessonTitle
+    name: Iterable[LessonTitle]
     cabinets: Iterable[Cabinet]
 
     def __post_init__(self):
         if not isinstance(self.cabinets, tuple):
             object.__setattr__(self, "cabinets", tuple(self.cabinets))
+
+        if not isinstance(self.name, tuple):
+            object.__setattr__(self, "name", tuple(self.name))
 
     def __hash__(self) -> int:
         return hash((self.time_range, self.name, self.cabinets))

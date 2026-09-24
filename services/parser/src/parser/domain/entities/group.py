@@ -9,6 +9,8 @@ _GROUP_NUMBER_PATTERN = re.compile(r"([А-Я]{1,3}-[0-9]{2,3})")
 
 @dataclass(frozen=True)
 class Group(ScheduleItem):
+    is_active: bool
+
     def __post_init__(self):
         if not _GROUP_NUMBER_PATTERN.match(self.title):
             raise ValueError("Invalid group number")
@@ -27,7 +29,7 @@ class GroupParser(Group):
 
     @cached_property
     def group(self) -> Group:
-        return Group(title=self.title)
+        return Group(title=self.title, is_active=self.is_active)
 
     def __eq__(self, value: object, /) -> bool:
         if not isinstance(value, GroupParser):

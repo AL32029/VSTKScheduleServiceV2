@@ -20,9 +20,9 @@ class ProdDatabaseSettings(BaseProdDatabaseSettings):
 class DatabaseSettings:
     def __init__(self, mode: Literal["dev", "prod"] = "dev"):
         self.mode = mode
-        self.dev: BaseDevDatabaseSettings = DevDatabaseSettings()
-        self.prod: BaseProdDatabaseSettings = ProdDatabaseSettings()
+        self._dev: BaseDevDatabaseSettings = DevDatabaseSettings()
+        self._prod: BaseProdDatabaseSettings = ProdDatabaseSettings()
 
     @property
     def config(self) -> "BaseDevDatabaseSettings | BaseProdDatabaseSettings":
-        return self.dev if self.mode == "dev" else self.prod
+        return self._dev if self.mode == "dev" else self._prod
