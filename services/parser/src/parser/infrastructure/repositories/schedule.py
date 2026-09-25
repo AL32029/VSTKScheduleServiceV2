@@ -65,6 +65,9 @@ class ScheduleRepository(ABC):
         schedules_to: datetime.date | None = None,
     ) -> dict[
         Literal["groups", "cabinets"],
-        dict[Literal["published", "modified", "deleted"], list[dict]],
+        dict[
+            Literal["published", "modified", "deleted"],
+            list[dict[Literal["index", "number"], str]],
+        ],
     ]:
         raise NotImplementedError

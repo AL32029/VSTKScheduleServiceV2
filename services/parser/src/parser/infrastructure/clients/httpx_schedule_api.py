@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import asyncio
 import datetime
+import hashlib
 import logging
 import re
 from collections.abc import Iterable
 from datetime import date
 from re import Pattern
-from typing import Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import httpx
 import numpy
@@ -20,6 +23,9 @@ from parser.domain.entities.lesson_time_range import LessonTimeRange
 from parser.domain.entities.lesson_title import LessonTitle
 from parser.infrastructure.clients.schedule_api import ScheduleAPIClient
 from parser.infrastructure.config.system_settings import system_settings
+
+if TYPE_CHECKING:
+    from parser.infrastructure.repositories.cache import CacheRepository
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +59,13 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
         "декабря": 12,
     }
 
-    def __init__(self, client: AsyncClient):
-        self._client = client
+    def __init__(
+        self,
+        httpx_client: AsyncClient,
+        cache_repo: CacheRepository,
+    ):
+        self._httpx_client = httpx_client
+        self._cache_client = cache_repo
 
     async def fetch_schedule_by_url(
         self, schedule_at: Literal["today", "tomorrow"]
@@ -75,7 +86,7 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
         logger.info("Starting schedule parsing for %s", schedule_at)
         _url = (
             f"day-{schedule_at}.php"
-            if self._client.base_url
+            if self._httpx_client.base_url
             else f"https://vgtk.by/schedule/lessons/day-{schedule_at}.php"
         )
 
@@ -109,8 +120,43 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
             schedule_at,
         )
 
-        # TODO: Добавить проверку хэша таблицы в Redis и
-        #  прекращение парсинга при совпадении хэша
+        logger.debug("Computing the hash of the schedule table for %s", schedule_at)
+        _schedule_table_hash = hashlib.sha256(
+            str(_schedule_table).encode("utf-8")
+        ).hexdigest()
+        logger.debug(
+            "Computed schedule table hash for %s: %s",
+            schedule_at,
+            _schedule_table_hash,
+        )
+
+        logger.debug(
+            "Checking the schedule hash for %s against the cached one", schedule_at
+        )
+        _has_schedule_changes = await self._cache_client.has_schedule_changes(
+            _schedule_table_hash,
+            schedule_at,
+        )
+
+        if not _has_schedule_changes:
+            logger.info(
+                "The schedule hash for %s differs from the cached one, "
+                "skipping further processing",
+                schedule_at,
+            )
+            return None
+
+        logger.info(
+            "The schedule hash for %s matches the cached one, proceeding with parsing",
+            schedule_at,
+        )
+
+        logger.debug("Caching the schedule table hash for %s", schedule_at)
+        await self._cache_client.cache_schedule_hash(
+            _schedule_table_hash,
+            schedule_at,
+        )
+        logger.debug("Schedule table hash for %s has been cached", schedule_at)
 
         logger.info("Converting the schedule table for %s into a matrix", schedule_at)
         _schedule_matrix = self._generate_matrix_from_table(_schedule_table)
@@ -222,8 +268,10 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
         _attempts_count = 3
 
         _full_url = url
-        if self._client.base_url and not url.startswith(("http://", "https://")):
-            _full_url = str(self._client.base_url).rstrip("/") + "/" + url.lstrip("/")
+        if self._httpx_client.base_url and not url.startswith(("http://", "https://")):
+            _full_url = (
+                str(self._httpx_client.base_url).rstrip("/") + "/" + url.lstrip("/")
+            )
 
         logger.debug("Fetching HTML content from %s", _full_url)
 
@@ -235,7 +283,7 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
                     attempt + 1,
                     _attempts_count,
                 )
-                response = await self._client.get(url)
+                response = await self._httpx_client.get(url)
 
                 if response.is_client_error:
                     logger.debug(

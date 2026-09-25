@@ -2,24 +2,23 @@ import logging
 from collections.abc import AsyncIterable
 from typing import Annotated
 
+from arq import ArqRedis
 from dishka import FromComponent, Provider, Scope, provide
-from redis.asyncio import Redis
 from redis_manager.manager import RedisClientManager
 from redis_manager.settings import BaseDevRedisSettings, BaseProdRedisSettings
 
-from parser.infrastructure.config.redis_settings import RedisSettings
+from parser.infrastructure.config.redis_settings import RedisARQSettings
 
 logger = logging.getLogger(__name__)
 
 
-class RedisMainProvider(Provider):
+class RedisARQProvider(Provider):
     scope = Scope.APP
-    component = "redis_main"
+    component = "redis_arq"
 
     @provide
     def settings(
-        self,
-        settings: Annotated[RedisSettings, FromComponent("")],
+        self, settings: Annotated[RedisARQSettings, FromComponent("")]
     ) -> BaseDevRedisSettings | BaseProdRedisSettings:
         logger.debug(
             "Providing Redis settings (mode=%s, config=%s)",
@@ -30,20 +29,19 @@ class RedisMainProvider(Provider):
 
     @provide
     def manager(
-        self,
-        settings: BaseDevRedisSettings | BaseProdRedisSettings,
+        self, settings: BaseDevRedisSettings | BaseProdRedisSettings
     ) -> RedisClientManager:
         logger.debug(
             "Creating RedisClientManager with settings %s",
             type(settings).__name__,
         )
-        return RedisClientManager(settings=settings, redis_type="main")
+        return RedisClientManager(settings=settings, redis_type="arq")
 
     @provide(scope=Scope.REQUEST)
     async def provide_redis_client(
         self,
         manager: "RedisClientManager",
-    ) -> AsyncIterable[Redis]:
+    ) -> AsyncIterable[ArqRedis]:
         logger.debug("Requesting a Redis client from the manager")
 
         client = await manager.get_client()
