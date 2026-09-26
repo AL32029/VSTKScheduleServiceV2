@@ -9,9 +9,6 @@ class LessonTimeRange:
     end: datetime.time
     time_type: Literal["standard", "reduce"] | None = None
 
-    def __str__(self) -> str:
-        return f"{self.start.strftime('%H:%M')} - {self.end.strftime('%H:%M')}"
-
     def __post_init__(self):
         if self.end < self.start:
             raise ValueError(

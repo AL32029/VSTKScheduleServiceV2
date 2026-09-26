@@ -10,6 +10,9 @@ class ScheduleItem:
     title: str
 
     def __post_init__(self):
+        if not self.title.strip():
+            raise ValueError("The title field cannot be empty")
+
         object.__setattr__(self, "title", self.title.strip())
 
     @cached_property

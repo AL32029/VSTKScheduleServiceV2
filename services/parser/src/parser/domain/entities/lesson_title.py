@@ -6,6 +6,8 @@ from parser.domain.entities.base import ScheduleItem
 @dataclass(frozen=True)
 class LessonTitle(ScheduleItem):
     def __post_init__(self):
+        super().__post_init__()
+
         object.__setattr__(self, "title", " ".join(self.title.split()))
 
     def __eq__(self, value: object, /) -> bool:

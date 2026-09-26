@@ -596,7 +596,7 @@ class HTTPXScheduleAPIClient(ScheduleAPIClient):
             return None
 
         groups = [
-            GroupParser(title=g, pos_x=int(x), pos_y=int(y), is_active=True)
+            GroupParser(title=g, pos_x=int(x), pos_y=int(y))
             for g, (y, x) in zip(matrix_mask, argwhere(mask), strict=False)
         ]
 

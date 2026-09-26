@@ -30,13 +30,7 @@ class SQLAlchemyScheduleRepository(ScheduleRepository):
             await self._session.execute(stmt)
         ).scalar_one_or_none() or []
 
-        groups = [
-            Group(
-                title=cast(str, group.get("number")),
-                is_active=cast(bool, group.get("is_active")),
-            )
-            for group in result
-        ]
+        groups = [Group(title=cast(str, group.get("number"))) for group in result]
 
         logger.debug("Fetched %d groups from the database", len(groups))
         return groups
